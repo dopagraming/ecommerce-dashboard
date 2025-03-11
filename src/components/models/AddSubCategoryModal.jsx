@@ -1,23 +1,25 @@
-import { Fragment } from "react";
+import { Fragment, useEffect } from "react";
 import { Dialog, Transition } from "@headlessui/react";
 import { useForm } from "react-hook-form";
 import { toast } from "react-hot-toast";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "../../lib/axios";
 
-export default function AddSubCategoryModal({ isOpen, onClose, onSuccess }) {
+export default function AddSubCategoryModal({
+  isOpen,
+  onClose,
+  onSuccess,
+  refetch,
+  subcategory,
+  isEditMode,
+}) {
   const {
     register,
     handleSubmit,
     reset,
+    setValue,
     formState: { errors, isSubmitting },
   } = useForm();
-
-  // const { data: categories } = useQuery(
-  //   ["categories"], async () => {
-  //   const response = await api.get("/categories");
-  //   return response.data;
-  // });
 
   const { data: categories } = useQuery({
     queryKey: "categories",
@@ -29,22 +31,27 @@ export default function AddSubCategoryModal({ isOpen, onClose, onSuccess }) {
 
   const onSubmit = async (data) => {
     try {
-      const token = localStorage.getItem("token");
-
-      await api.post("/subcategories", data, {
-        headers: {
-          Authorization: token ? `Bearer ${token}` : "",
-        },
-      });
-
-      toast.success("Subcategory added successfully");
+      if (subcategory && isEditMode) {
+        await api.put(`/subcategories/${subcategory._id}`, data);
+        toast.success("Subcategory edited successfully");
+      } else {
+        await api.post("/subcategories", data);
+        toast.success("Subcategory added successfully");
+      }
       reset();
+      refetch();
       onSuccess?.();
       onClose();
     } catch (error) {
       toast.error(error.response?.data?.message || "Something went wrong");
     }
   };
+  useEffect(() => {
+    if (subcategory && isEditMode) {
+      setValue("name", subcategory.name);
+      setValue("category", subcategory.category);
+    }
+  }, [subcategory, isEditMode, setValue, reset]);
   return (
     <Transition.Root show={isOpen} as={Fragment}>
       <Dialog as="div" className="relative z-50" onClose={onClose}>
@@ -78,7 +85,7 @@ export default function AddSubCategoryModal({ isOpen, onClose, onSuccess }) {
                       as="h3"
                       className="text-lg font-semibold leading-6 text-gray-900"
                     >
-                      Add Subcategory
+                      {isEditMode ? "Edit Subcategory" : "Add Subcategory"}
                     </Dialog.Title>
                     <div className="mt-4 space-y-4">
                       <div>
@@ -110,11 +117,11 @@ export default function AddSubCategoryModal({ isOpen, onClose, onSuccess }) {
                           htmlFor="category"
                           className="block text-sm font-medium text-gray-700"
                         >
-                          Category
+                          category
                         </label>
                         <select
                           {...register("category", {
-                            required: "Category is required",
+                            required: "category is required",
                           })}
                           className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
                         >
@@ -139,7 +146,13 @@ export default function AddSubCategoryModal({ isOpen, onClose, onSuccess }) {
                       disabled={isSubmitting}
                       className="inline-flex w-full justify-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 sm:col-start-2"
                     >
-                      {isSubmitting ? "Adding..." : "Add"}
+                      {isSubmitting
+                        ? isEditMode
+                          ? "Editing"
+                          : "Adding..."
+                        : isEditMode
+                        ? "Edit"
+                        : "Add"}
                     </button>
                     <button
                       type="button"

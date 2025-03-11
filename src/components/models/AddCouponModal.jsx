@@ -1,34 +1,51 @@
-import { Fragment } from "react";
+import { Fragment, useEffect } from "react";
 import { Dialog, Transition } from "@headlessui/react";
-import { useForm } from "react-hook-form";
+import { set, useForm } from "react-hook-form";
 import { toast } from "react-hot-toast";
 import { api } from "../../lib/axios";
+import { DisplayErrors } from "../../utils";
 
-export default function AddCouponModal({ isOpen, onClose, onSuccess }) {
+export default function AddCouponModal({
+  isOpen,
+  onClose,
+  onSuccess,
+  coupon,
+  refetch,
+  isEditMode,
+}) {
   const {
     register,
     handleSubmit,
     reset,
+    setValue,
     formState: { errors, isSubmitting },
   } = useForm();
 
   const onSubmit = async (data) => {
     try {
-      const token = localStorage.getItem("token");
-      await api.post("/coupons", data, {
-        headers: {
-          Authorization: token ? `Bearer ${token}` : "",
-        },
-      });
-      toast.success("Coupon added successfully");
+      if (coupon && isEditMode) {
+        await api.put(`/coupons/${coupon._id}`, data);
+        toast.success("Coupon updated successfully");
+      } else {
+        await api.post("/coupons", data);
+        toast.success("Coupon added successfully");
+      }
       reset();
       onSuccess?.();
+      refetch();
       onClose();
     } catch (error) {
-      toast.error(error.response?.data?.message || "Something went wrong");
+      DisplayErrors(error);
     }
   };
-
+  useEffect(() => {
+    if (isEditMode && coupon) {
+      setValue("name", coupon.name);
+      setValue("discount", coupon.discount);
+    } else {
+      reset();
+    }
+  }, [coupon, isEditMode, setValue, reset]);
   return (
     <Transition.Root show={isOpen} as={Fragment}>
       <Dialog as="div" className="relative z-50" onClose={onClose}>
@@ -62,7 +79,7 @@ export default function AddCouponModal({ isOpen, onClose, onSuccess }) {
                       as="h3"
                       className="text-lg font-semibold leading-6 text-gray-900"
                     >
-                      Add Coupon
+                      {isEditMode ? "Edit Coupon" : "Add Coupon"}
                     </Dialog.Title>
                     <div className="mt-4 space-y-4">
                       <div>
@@ -146,7 +163,13 @@ export default function AddCouponModal({ isOpen, onClose, onSuccess }) {
                       disabled={isSubmitting}
                       className="inline-flex w-full justify-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 sm:col-start-2"
                     >
-                      {isSubmitting ? "Adding..." : "Add"}
+                      {isSubmitting
+                        ? isEditMode
+                          ? "Editing"
+                          : "Adding..."
+                        : isEditMode
+                        ? "Edit"
+                        : "Add"}
                     </button>
                     <button
                       type="button"

@@ -1,26 +1,42 @@
-import { Fragment } from "react";
+import { Fragment, useEffect } from "react";
 import { Dialog, Transition } from "@headlessui/react";
 import { useForm } from "react-hook-form";
 import { toast } from "react-hot-toast";
 import { api } from "../../lib/axios";
 
-export default function AddBrandModal({ isOpen, onClose, onSuccess }) {
+export default function AddBrandModal({
+  isOpen,
+  onClose,
+  onSuccess,
+  brand,
+  isEditMode,
+}) {
   const {
     register,
     handleSubmit,
     reset,
+    setValue,
     formState: { errors, isSubmitting },
   } = useForm();
 
+  useEffect(() => {
+    if (brand && isEditMode) {
+      setValue("name", brand.name);
+      setValue("image", brand.image);
+    } else {
+      reset();
+    }
+  }, [brand, isEditMode, setValue, reset]);
+
   const onSubmit = async (data) => {
     try {
-      const token = localStorage.getItem("token");
-      await api.post("/brands", data, {
-        headers: {
-          Authorization: token ? `Bearer ${token}` : "",
-        },
-      });
-      toast.success("Category added successfully");
+      if (isEditMode) {
+        await api.put(`/brands/${brand._id}`, data);
+        toast.success("Brand updated successfully");
+      } else {
+        await api.post("/brands", data);
+        toast.success("Brand added successfully");
+      }
       reset();
       onSuccess?.();
       onClose();
@@ -28,6 +44,7 @@ export default function AddBrandModal({ isOpen, onClose, onSuccess }) {
       toast.error(error.response?.data?.message || "Something went wrong");
     }
   };
+
   return (
     <Transition.Root show={isOpen} as={Fragment}>
       <Dialog as="div" className="relative z-50" onClose={onClose}>
@@ -61,7 +78,7 @@ export default function AddBrandModal({ isOpen, onClose, onSuccess }) {
                       as="h3"
                       className="text-lg font-semibold leading-6 text-gray-900"
                     >
-                      Add Brand
+                      {isEditMode ? "Edit Brand" : "Add Brand"}
                     </Dialog.Title>
                     <div className="mt-4 space-y-4">
                       <div>
@@ -113,7 +130,13 @@ export default function AddBrandModal({ isOpen, onClose, onSuccess }) {
                       disabled={isSubmitting}
                       className="inline-flex w-full justify-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 sm:col-start-2"
                     >
-                      {isSubmitting ? "Adding..." : "Add"}
+                      {isSubmitting
+                        ? isEditMode
+                          ? "Updating..."
+                          : "Adding..."
+                        : isEditMode
+                        ? "Update"
+                        : "Add"}
                     </button>
                     <button
                       type="button"

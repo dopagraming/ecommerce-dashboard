@@ -1,10 +1,17 @@
 import { useQuery } from "@tanstack/react-query";
 import { api } from "../lib/axios";
+import { useState } from "react";
+import DeleteConfirmationModal from "../components/models/DeleteConfirmationModal";
 
 export default function Reviews() {
+  const [isDeleteModelOpen, setIsDleteModelOpen] = useState(false);
+  const onClose = () => {
+    setIsDleteModelOpen(false);
+  };
   const {
     data: reviews,
     isLoading,
+    refetch,
     error,
   } = useQuery({
     queryKey: ["reviews"], // ✅ تمرير كائن بدلاً من مصفوفة
@@ -56,50 +63,65 @@ export default function Reviews() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
+                <></>
                 {reviews?.map((review) => (
-                  <tr key={review._id}>
-                    <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-0">
-                      {review?.user ? review?.user : "ahmet"}
-                    </td>
-                    <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                      {review.product}
-                    </td>
-                    <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                      <div className="flex items-center">
+                  <>
+                    <tr key={review._id}>
+                      <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-0">
+                        {review?.user ? review?.user : "ahmet"}
+                      </td>
+                      <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
+                        {review.product}
+                      </td>
+                      <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
                         <div className="flex items-center">
-                          {[...Array(5)].map((_, index) => (
-                            <svg
-                              key={index}
-                              className={`h-5 w-5 ${
-                                index < review.rating
-                                  ? "text-yellow-400"
-                                  : "text-gray-300"
-                              }`}
-                              fill="currentColor"
-                              viewBox="0 0 20 20"
-                              xmlns="http://www.w3.org/2000/svg"
-                            >
-                              <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                            </svg>
-                          ))}
+                          <div className="flex items-center">
+                            {[...Array(5)].map((_, index) => (
+                              <svg
+                                key={index}
+                                className={`h-5 w-5 ${
+                                  index < review.rating
+                                    ? "text-yellow-400"
+                                    : "text-gray-300"
+                                }`}
+                                fill="currentColor"
+                                viewBox="0 0 20 20"
+                                xmlns="http://www.w3.org/2000/svg"
+                              >
+                                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                              </svg>
+                            ))}
+                          </div>
+                          <span className="ml-2 text-gray-500">
+                            {review.rating}/5
+                          </span>
                         </div>
-                        <span className="ml-2 text-gray-500">
-                          {review.rating}/5
-                        </span>
-                      </div>
-                    </td>
-                    <td className="px-3 py-4 text-sm text-gray-500 max-w-md">
-                      <div className="truncate">{review.title}</div>
-                    </td>
-                    <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                      {new Date(review.createdAt).toLocaleDateString()}
-                    </td>
-                    <td className="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-0">
-                      <button className="text-red-600 hover:text-red-900">
-                        Delete
-                      </button>
-                    </td>
-                  </tr>
+                      </td>
+                      <td className="px-3 py-4 text-sm text-gray-500 max-w-md">
+                        <div className="truncate">{review.title}</div>
+                      </td>
+                      <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
+                        {new Date(review.createdAt).toLocaleDateString()}
+                      </td>
+                      <td className="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-0">
+                        <button
+                          className="text-red-600 hover:text-red-900"
+                          onClick={() => setIsDleteModelOpen(true)}
+                        >
+                          Delete
+                        </button>
+                      </td>
+                    </tr>
+                    <DeleteConfirmationModal
+                      isOpen={isDeleteModelOpen}
+                      onClose={onClose}
+                      title={review.name}
+                      id={review._id}
+                      model={"reviews"}
+                      message={`Are you sure you want to delete this review`}
+                      refetch={refetch}
+                    />
+                  </>
                 ))}
               </tbody>
             </table>

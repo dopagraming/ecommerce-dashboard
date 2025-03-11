@@ -2,16 +2,33 @@ import { useQuery } from "@tanstack/react-query";
 import { api } from "../lib/axios";
 import AddSubCategoryModal from "../components/models/AddSubCategoryModal";
 import { useState } from "react";
+import DeleteConfirmationModal from "../components/models/DeleteConfirmationModal";
 
 export default function SubCategories() {
-  const [isOpen, setIsOnpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [selectedSubcategory, setSelectedSubcategory] = useState(null);
+  const [isDeleteMode, setIsDeleteMode] = useState(false);
   const onClose = () => {
-    setIsOnpen(false);
+    setIsOpen(false);
+    setSelectedSubcategory(null);
+    setIsEditMode(false);
+    setIsDeleteMode(false);
+  };
+  const handleEdit = (subcategory) => {
+    setSelectedSubcategory(subcategory);
+    setIsEditMode(true);
+    setIsOpen(true);
+  };
+  const handleDelete = (subcategory) => {
+    setSelectedSubcategory(subcategory);
+    setIsDeleteMode(true);
   };
   const {
     data: subCategories,
     isLoading,
     isError,
+    refetch,
     error,
   } = useQuery({
     queryKey: ["subCategories"],
@@ -41,7 +58,7 @@ export default function SubCategories() {
           <button
             type="button"
             className="block rounded-md bg-indigo-600 px-3 py-2 text-center text-sm font-semibold text-white hover:bg-indigo-500"
-            onClick={() => setIsOnpen(true)}
+            onClick={() => setIsOpen(true)}
           >
             Add Sub Category
           </button>
@@ -72,29 +89,51 @@ export default function SubCategories() {
               </thead>
               <tbody className="divide-y divide-gray-200">
                 {subCategories?.map((subCategory) => (
-                  <tr key={subCategory.id}>
-                    <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-0">
-                      {subCategory.name}
-                    </td>
-                    <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                      {subCategory.category}
-                    </td>
-                    <td className="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-0">
-                      <button className="text-indigo-600 hover:text-indigo-900 mr-4">
-                        Edit
-                      </button>
-                      <button className="text-red-600 hover:text-red-900">
-                        Delete
-                      </button>
-                    </td>
-                  </tr>
+                  <>
+                    <tr key={subCategory.id}>
+                      <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-0">
+                        {subCategory.name}
+                      </td>
+                      <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
+                        {subCategory.category}
+                      </td>
+                      <td className="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-0">
+                        <button
+                          className="text-indigo-600 hover:text-indigo-900 mr-4"
+                          onClick={() => handleEdit(subCategory)}
+                        >
+                          Edit
+                        </button>
+                        <button
+                          className="text-red-600 hover:text-red-900"
+                          onClick={() => handleDelete(subCategory)}
+                        >
+                          Delete
+                        </button>
+                      </td>
+                    </tr>
+                  </>
                 ))}
               </tbody>
             </table>
           </div>
         </div>
       </div>
-      <AddSubCategoryModal isOpen={isOpen} onClose={onClose} />
+      <DeleteConfirmationModal
+        isOpen={isDeleteMode}
+        onClose={onClose}
+        model="subcategories"
+        message="Are you sure you want to delete this subcategory? This action cannot be undone."
+        doc={selectedSubcategory}
+        refetch={refetch}
+      />
+      <AddSubCategoryModal
+        isOpen={isOpen}
+        onClose={onClose}
+        refetch={refetch}
+        subcategory={selectedSubcategory}
+        isEditMode={isEditMode}
+      />
     </div>
   );
 }

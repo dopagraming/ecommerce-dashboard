@@ -1,47 +1,57 @@
-import { Fragment } from "react";
+import { Fragment, useEffect } from "react";
 import { Dialog, Transition } from "@headlessui/react";
 import { useForm } from "react-hook-form";
 import { toast } from "react-hot-toast";
-import { useQuery } from "@tanstack/react-query";
 import { api } from "../../lib/axios";
-
-export default function AddUserModel({ isOpen, onClose, onSuccess }) {
+import { DisplayErrors } from "../../utils/index";
+export default function AddUserModel({
+  isOpen,
+  onClose,
+  onSuccess,
+  refetch,
+  isEditMode,
+  user,
+}) {
   const {
     register,
     handleSubmit,
     reset,
     watch,
+    setValue,
     formState: { errors, isSubmitting },
   } = useForm();
   const password = watch("password");
 
-  const { data: users } = useQuery({
-    queryKey: "user",
-    queryFn: async () => {
-      const response = await api.get("/categories");
-      return response.data.data;
-    },
-  });
-
   const onSubmit = async (data) => {
     try {
-      const token = localStorage.getItem("token");
-
-      await api.post("/users", data, {
-        headers: {
-          Authorization: token ? `Bearer ${token}` : "",
-        },
-      });
-
-      toast.success("Subcategory added successfully");
+      if (user && isEditMode) {
+        await api.put(`/users/${user._id}`, data);
+        toast.success("Subcategory updated successfully");
+      } else {
+        await api.post("/users", data);
+        toast.success("Subcategory added successfully");
+      }
       reset();
       onSuccess?.();
+      refetch();
       onClose();
     } catch (error) {
-      toast.error(error.response?.data?.message || "Something went wrong");
+      console.log(error);
+      DisplayErrors(error);
     }
   };
   const roles = ["user", "admin", "manager"];
+  useEffect(() => {
+    if (isEditMode && user) {
+      setValue("name", user.name);
+      setValue("email", user.email);
+      setValue("role", user.role);
+      setValue("password", user.password);
+      setValue("passwordConfirm", user.password);
+    } else {
+      reset();
+    }
+  }, [user, isEditMode, setValue, reset]);
   return (
     <Transition.Root show={isOpen} as={Fragment}>
       <Dialog as="div" className="relative z-50" onClose={onClose}>
@@ -75,7 +85,7 @@ export default function AddUserModel({ isOpen, onClose, onSuccess }) {
                       as="h3"
                       className="text-lg font-semibold leading-6 text-gray-900"
                     >
-                      Add new one
+                      {isEditMode ? "Update user" : "Add new user"}
                     </Dialog.Title>
                     <div className="mt-4 space-y-4">
                       <div>
@@ -126,7 +136,9 @@ export default function AddUserModel({ isOpen, onClose, onSuccess }) {
                           </p>
                         )}
                       </div>
-                      <div>
+                      <div
+                      //  className={`${isEditMode ? "hidden" : ""}`}
+                      >
                         <label
                           htmlFor="password"
                           className="block text-sm font-medium text-gray-700"
@@ -150,7 +162,9 @@ export default function AddUserModel({ isOpen, onClose, onSuccess }) {
                           </p>
                         )}
                       </div>
-                      <div>
+                      <div
+                      //  className={`${isEditMode ? "hidden" : ""}`}
+                      >
                         <label
                           htmlFor="passwordconfirm"
                           className="block text-sm font-medium text-gray-700"
@@ -205,7 +219,13 @@ export default function AddUserModel({ isOpen, onClose, onSuccess }) {
                       disabled={isSubmitting}
                       className="inline-flex w-full justify-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 sm:col-start-2"
                     >
-                      {isSubmitting ? "Adding..." : "Add"}
+                      {isSubmitting
+                        ? isEditMode
+                          ? "Updating..."
+                          : "Adding..."
+                        : isEditMode
+                        ? "Edit"
+                        : "Add"}
                     </button>
                     <button
                       type="button"

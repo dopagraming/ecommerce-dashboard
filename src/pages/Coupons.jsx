@@ -2,10 +2,28 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "../lib/axios";
 import AddCouponModal from "../components/models/AddCouponModal";
+import DeleteConfirmationModal from "../components/models/DeleteConfirmationModal";
 
 export default function Coupons() {
   const [isOpen, setIsOpen] = useState(false);
-
+  const [selectedCoupon, setSelectedCoupon] = useState(null);
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [isDeleteModelOpen, setIsDleteModelOpen] = useState(false);
+  const onClose = () => {
+    setIsOpen(false);
+    setSelectedCoupon(null);
+    setIsEditMode(false);
+    setIsDleteModelOpen(false);
+  };
+  const handleEdit = (coupon) => {
+    setSelectedCoupon(coupon);
+    setIsEditMode(true);
+    setIsOpen(true);
+  };
+  const handleDelete = (coupon) => {
+    setSelectedCoupon(coupon);
+    setIsDleteModelOpen(true);
+  };
   const {
     data: coupons,
     isLoading,
@@ -13,12 +31,7 @@ export default function Coupons() {
   } = useQuery({
     queryKey: ["coupons"],
     queryFn: async () => {
-      const token = localStorage.getItem("token");
-      const response = await api.get("/coupons", {
-        headers: {
-          Authorization: `Bearer ${token}`, // Ensure the correct format
-        },
-      });
+      const response = await api.get("/coupons");
       return response.data.data;
     },
   });
@@ -78,39 +91,57 @@ export default function Coupons() {
               </thead>
               <tbody className="divide-y divide-gray-200">
                 {coupons?.map((coupon) => (
-                  <tr key={coupon.id}>
-                    <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-0">
-                      {coupon.name}
-                    </td>
-                    <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                      {coupon.discount}%
-                    </td>
-                    <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                      {new Date(coupon.expiryDate).toLocaleDateString()}
-                    </td>
-                    <td className="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-0">
-                      <button className="text-indigo-600 hover:text-indigo-900 mr-4">
-                        Edit
-                      </button>
-                      <button className="text-red-600 hover:text-red-900">
-                        Delete
-                      </button>
-                    </td>
-                  </tr>
+                  <>
+                    <tr key={coupon.id}>
+                      <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-0">
+                        {coupon.name}
+                      </td>
+                      <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
+                        {coupon.discount}%
+                      </td>
+                      <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
+                        {new Date(coupon.expire).toLocaleDateString()}
+                      </td>
+                      <td className="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-0">
+                        <button
+                          className="text-indigo-600 hover:text-indigo-900 mr-4"
+                          onClick={() => handleEdit(coupon)}
+                        >
+                          Edit
+                        </button>
+                        <button
+                          className="text-red-600 hover:text-red-900"
+                          onClick={() => handleDelete(coupon)}
+                        >
+                          Delete
+                        </button>
+                      </td>
+                    </tr>
+                  </>
                 ))}
               </tbody>
             </table>
           </div>
         </div>
       </div>
-
+      <DeleteConfirmationModal
+        isOpen={isDeleteModelOpen}
+        onClose={onClose}
+        doc={selectedCoupon}
+        model={"coupons"}
+        message={`Are you sure you want to delete this coupon`}
+        refetch={refetch}
+      />
       <AddCouponModal
         isOpen={isOpen}
-        onClose={() => setIsOpen(false)}
+        onClose={onClose}
         onSuccess={() => {
           refetch();
           setIsOpen(false);
         }}
+        refetch={refetch}
+        isEditMode={isEditMode}
+        coupon={selectedCoupon}
       />
     </div>
   );
