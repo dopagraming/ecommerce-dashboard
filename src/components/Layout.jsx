@@ -25,8 +25,8 @@ const navigation = [
   { name: "Users", href: "/users", icon: UserGroupIcon },
   { name: "Reviews", href: "/reviews", icon: StarIcon },
   { name: "Coupons", href: "/coupons", icon: TicketIcon },
-  { name: "Addresses", href: "/addresses", icon: MapPinIcon },
-  { name: "WishLists", href: "/wishlists", icon: HeartIcon },
+  // { name: "Addresses", href: "/addresses", icon: MapPinIcon },
+  // { name: "WishLists", href: "/wishlists", icon: HeartIcon },
 ];
 
 export default function Layout({ children }) {

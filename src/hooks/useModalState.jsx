@@ -1,3 +1,4 @@
+import { QueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 
 const useModalState = () => {
@@ -23,12 +24,16 @@ const useModalState = () => {
     setSelectedItem(item);
     setIsDeleteModalOpen(true);
   };
+
   const handleAdd = () => {
     setIsOpen(true);
   };
+
+  const handleSuccess = (model) => {
+    QueryClient.invalidateQueries([`${model}`]);
+  };
   return {
     isOpen,
-    setIsOpen,
     selectedItem,
     isEditMode,
     isDeleteModalOpen,
@@ -36,6 +41,7 @@ const useModalState = () => {
     handleEdit,
     handleDelete,
     handleAdd,
+    handleSuccess,
   };
 };
 

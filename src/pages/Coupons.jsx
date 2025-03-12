@@ -3,38 +3,21 @@ import { useQuery } from "@tanstack/react-query";
 import { api } from "../lib/axios";
 import AddCouponModal from "../components/models/AddCouponModal";
 import DeleteConfirmationModal from "../components/models/DeleteConfirmationModal";
+import useModalState from "../hooks/useModalState";
+import useGetItmes from "../hooks/useGetProducts";
 
 export default function Coupons() {
-  const [isOpen, setIsOpen] = useState(false);
-  const [selectedCoupon, setSelectedCoupon] = useState(null);
-  const [isEditMode, setIsEditMode] = useState(false);
-  const [isDeleteModelOpen, setIsDleteModelOpen] = useState(false);
-  const onClose = () => {
-    setIsOpen(false);
-    setSelectedCoupon(null);
-    setIsEditMode(false);
-    setIsDleteModelOpen(false);
-  };
-  const handleEdit = (coupon) => {
-    setSelectedCoupon(coupon);
-    setIsEditMode(true);
-    setIsOpen(true);
-  };
-  const handleDelete = (coupon) => {
-    setSelectedCoupon(coupon);
-    setIsDleteModelOpen(true);
-  };
   const {
-    data: coupons,
-    isLoading,
-    refetch,
-  } = useQuery({
-    queryKey: ["coupons"],
-    queryFn: async () => {
-      const response = await api.get("/coupons");
-      return response.data.data;
-    },
-  });
+    isOpen,
+    selectedItem,
+    isEditMode,
+    isDeleteModalOpen,
+    onClose,
+    handleEdit,
+    handleDelete,
+    handleAdd,
+  } = useModalState();
+  const { data, isLoading, error, refetch } = useGetItmes("coupons");
 
   if (isLoading) {
     return (
@@ -42,6 +25,9 @@ export default function Coupons() {
         <div className="text-lg">Loading...</div>
       </div>
     );
+  }
+  if (error) {
+    return <div className="text-red-600">⚠️ Error: {error.message}</div>;
   }
 
   return (
@@ -53,7 +39,7 @@ export default function Coupons() {
         <div className="mt-4 sm:ml-16 sm:mt-0 sm:flex-none">
           <button
             type="button"
-            onClick={() => setIsOpen(true)}
+            onClick={() => handleAdd()}
             className="block rounded-md bg-indigo-600 px-3 py-2 text-center text-sm font-semibold text-white hover:bg-indigo-500"
           >
             Add Coupon
@@ -90,7 +76,7 @@ export default function Coupons() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
-                {coupons?.map((coupon) => (
+                {data?.map((coupon) => (
                   <>
                     <tr key={coupon.id}>
                       <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-0">
@@ -125,9 +111,9 @@ export default function Coupons() {
         </div>
       </div>
       <DeleteConfirmationModal
-        isOpen={isDeleteModelOpen}
+        isOpen={isDeleteModalOpen}
         onClose={onClose}
-        doc={selectedCoupon}
+        doc={selectedItem}
         model={"coupons"}
         message={`Are you sure you want to delete this coupon`}
         refetch={refetch}
@@ -135,13 +121,9 @@ export default function Coupons() {
       <AddCouponModal
         isOpen={isOpen}
         onClose={onClose}
-        onSuccess={() => {
-          refetch();
-          setIsOpen(false);
-        }}
         refetch={refetch}
         isEditMode={isEditMode}
-        coupon={selectedCoupon}
+        coupon={selectedItem}
       />
     </div>
   );

@@ -4,6 +4,7 @@ import AddUserModel from "../components/models/AddUserModel";
 import { useState } from "react";
 import DeleteConfirmationModal from "../components/models/DeleteConfirmationModal";
 import useModalState from "../hooks/useModalState";
+import useGetItmes from "../hooks/useGetProducts";
 
 export default function Users() {
   const {
@@ -16,25 +17,13 @@ export default function Users() {
     handleDelete,
     handleAdd,
   } = useModalState();
-  const {
-    data: users,
-    isLoading,
-    refetch,
-    isError,
-    error,
-  } = useQuery({
-    queryKey: ["users"],
-    queryFn: async () => {
-      const response = await api.get("/users");
-      return response.data.data;
-    },
-  });
+  const { data, isLoading, error, refetch } = useGetItmes("users");
 
   if (isLoading) {
     return <div>Loading...</div>;
   }
 
-  if (isError) {
+  if (error) {
     return <div>Error: {error.message}</div>;
   }
 
@@ -84,7 +73,7 @@ export default function Users() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
-                {users?.map((user) => (
+                {data?.map((user) => (
                   <>
                     <tr key={user._id}>
                       <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-0">

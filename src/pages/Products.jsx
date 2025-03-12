@@ -4,42 +4,22 @@ import DeleteOne from "../utils";
 import AddProductModal from "../components/models/AddProductModal";
 import { useState } from "react";
 import DeleteConfirmationModal from "../components/models/DeleteConfirmationModal";
+import useModalState from "../hooks/useModalState";
+import useGetItmes from "../hooks/useGetProducts";
 
 export default function Products() {
-  const queryClient = useQueryClient(); // Get the queryClient instance to manage cache
-  const [isOpen, setIsOpen] = useState(false);
-  const [selectedProduct, setSelectedProduct] = useState(null);
-  const [isEditMode, setIsEditMode] = useState(false);
-  const [isDeleteModelOpen, setIsDleteModelOpen] = useState(false);
-
-  const onClose = () => {
-    setIsOpen(false);
-    setSelectedProduct(null);
-    setIsEditMode(false);
-    setIsDleteModelOpen(false);
-  };
-  const handleEdit = (product) => {
-    setSelectedProduct(product);
-    setIsEditMode(true);
-    setIsOpen(true);
-    setIsDleteModelOpen(false);
-  };
-  const handleDelete = (product) => {
-    setSelectedProduct(product);
-    setIsDleteModelOpen(true);
-  };
+  // const queryClient = useQueryClient(); // Get the queryClient instance to manage cache
   const {
-    data: products,
-    isLoading,
-    error,
-    refetch,
-  } = useQuery({
-    queryKey: ["products"],
-    queryFn: async () => {
-      const response = await api.get("/products");
-      return response;
-    },
-  });
+    isOpen,
+    selectedItem,
+    isEditMode,
+    isDeleteModalOpen,
+    onClose,
+    handleEdit,
+    handleDelete,
+    handleAdd,
+  } = useModalState();
+  const { data, isLoading, error, refetch } = useGetItmes("products");
 
   if (isLoading) {
     return <div>Loading...</div>;
@@ -59,7 +39,7 @@ export default function Products() {
           <button
             type="button"
             className="block rounded-md bg-indigo-600 px-3 py-2 text-center text-sm font-semibold text-white hover:bg-indigo-500"
-            onClick={() => setIsOpen(true)}
+            onClick={() => handleAdd()}
           >
             Add Product
           </button>
@@ -95,13 +75,25 @@ export default function Products() {
                   >
                     Category
                   </th>
+                  <th
+                    scope="col"
+                    className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900"
+                  >
+                    subcategory
+                  </th>
+                  <th
+                    scope="col"
+                    className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900"
+                  >
+                    description
+                  </th>
                   <th scope="col" className="relative py-3.5 pl-3 pr-4 sm:pr-0">
                     <span className="sr-only">Actions</span>
                   </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
-                {products.data.data?.map((product) => (
+                {data?.map((product) => (
                   <>
                     <tr key={product._id}>
                       <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-0">
@@ -114,7 +106,13 @@ export default function Products() {
                         {product?.brand}
                       </td>
                       <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                        {product.category}
+                        {product.category?.name}
+                      </td>
+                      <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
+                        {product?.subcategory}
+                      </td>
+                      <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
+                        {product.description.slice(0, 20)}
                       </td>
                       <td className="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-0">
                         <button
@@ -139,19 +137,19 @@ export default function Products() {
         </div>
       </div>
       <DeleteConfirmationModal
-        isOpen={isDeleteModelOpen}
+        isOpen={isDeleteModalOpen}
         onClose={onClose}
         refetch={refetch}
         message="Are you sure you want to delete this product? This action cannot be undone."
         model={"products"}
-        doc={selectedProduct}
+        doc={selectedItem}
       />
       <AddProductModal
         isOpen={isOpen}
         onClose={onClose}
         refetch={refetch}
         isEditMode={isEditMode}
-        product={selectedProduct}
+        product={selectedItem}
       />
     </div>
   );

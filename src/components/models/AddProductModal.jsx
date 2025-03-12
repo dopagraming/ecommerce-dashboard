@@ -4,6 +4,7 @@ import { useForm } from "react-hook-form";
 import { toast } from "react-hot-toast";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "../../lib/axios";
+import { DisplayErrors } from "../../utils";
 export default function AddProductModal({
   isOpen,
   onClose,
@@ -70,7 +71,9 @@ export default function AddProductModal({
       reset();
       onSuccess?.();
       onClose();
-    } catch (error) {}
+    } catch (error) {
+      DisplayErrors(error);
+    }
   };
   useEffect(() => {
     console.log(product);

@@ -3,15 +3,10 @@ import api from '../lib/axios';
 
 const DeleteOne = async (id, type) => {
   try {
-    const token = localStorage.getItem("token")
-    const response = await api.delete(`/${type}/${id}`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
-    toast.success("Coupon added successfully");
+    await api.delete(`/${type}/${id}`);
+    toast.success("Document added successfully");
   } catch (error) {
-    toast.error(error.response?.data?.message || "Something went wrong");
+    DisplayErrors(error)
   }
 };
 

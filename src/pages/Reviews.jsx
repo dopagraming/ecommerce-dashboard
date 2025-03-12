@@ -2,24 +2,14 @@ import { useQuery } from "@tanstack/react-query";
 import { api } from "../lib/axios";
 import { useState } from "react";
 import DeleteConfirmationModal from "../components/models/DeleteConfirmationModal";
+import useGetItmes from "../hooks/useGetProducts";
 
 export default function Reviews() {
   const [isDeleteModelOpen, setIsDleteModelOpen] = useState(false);
   const onClose = () => {
     setIsDleteModelOpen(false);
   };
-  const {
-    data: reviews,
-    isLoading,
-    refetch,
-    error,
-  } = useQuery({
-    queryKey: ["reviews"], // ✅ تمرير كائن بدلاً من مصفوفة
-    queryFn: async () => {
-      const response = await api.get("/reviews");
-      return response.data.data;
-    },
-  });
+  const { data, isLoading, error, refetch } = useGetItmes("reviews");
 
   if (isLoading) {
     return <div>Loading...</div>;
@@ -64,7 +54,7 @@ export default function Reviews() {
               </thead>
               <tbody className="divide-y divide-gray-200">
                 <></>
-                {reviews?.map((review) => (
+                {data?.map((review) => (
                   <>
                     <tr key={review._id}>
                       <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-0">

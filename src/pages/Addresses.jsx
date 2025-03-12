@@ -7,7 +7,7 @@ export default function Addresses() {
     isLoading,
     error,
   } = useQuery({
-    queryKey: ["addresses"], // ✅ تمرير كائن بدلاً من مصفوفة
+    queryKey: ["addresses"],
     queryFn: async () => {
       const response = await api.get("/addresses");
       return response.data.data;

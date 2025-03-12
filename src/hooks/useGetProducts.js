@@ -1,21 +1,29 @@
-import axios from "axios";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "../lib/axios";
-import { data } from "react-router-dom";
+import { DisplayErrors } from "../utils";
 
-const fetchProducts = async () => {
-    const response = await api.get("/products");
-    console.log(response.data.data);
-    return response.data;
+const fetchItems = async (itemModle) => {
+    const response = await api.get(`/${itemModle}`);
+    return response.data.data;
 }
 
-const useGetProducts = () => {
+const useGetItmes = (itemModle) => {
     const {
-        data: products,
+        data,
         isLoading,
         error,
-    } = useQuery({ queryKey: ["products"], queryFn: fetchProducts })
+        refetch,
+    } = useQuery({
+        queryKey: [`${itemModle}`],
+        queryFn: () => fetchItems(itemModle),
+        onError: (error) => {
+            DisplayErrors(error)
+        },
+    })
     return {
-        data, isLoading, error
+        data, isLoading, error, refetch
     }
 }
+export default useGetItmes
+
+

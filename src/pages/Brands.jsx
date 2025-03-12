@@ -4,45 +4,22 @@ import { toast } from "react-hot-toast";
 import { api } from "../lib/axios";
 import AddBrandModal from "../components/models/AddBrandModal";
 import DeleteConfirmationModal from "../components/models/DeleteConfirmationModal";
+import useModalState from "../hooks/useModalState";
+import useGetItmes from "../hooks/useGetProducts";
 
 export default function Brands() {
-  const [isOpen, setIsOpen] = useState(false);
-  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  const [selectedBrand, setSelectedBrand] = useState(null);
-  const [isEditMode, setIsEditMode] = useState(false);
-
-  const handleEdit = (brand) => {
-    setSelectedBrand(brand);
-    setIsEditMode(true);
-    setIsOpen(true);
-  };
-  const handleDelete = (brand) => {
-    selectedBrand(brand);
-    setIsDeleteModalOpen(true);
-  };
-  const onClose = () => {
-    setIsOpen(false);
-    setSelectedBrand(null);
-    setIsEditMode(false);
-    setIsDeleteModalOpen(false);
-  };
-  const queryClient = useQueryClient();
-
   const {
-    data: brands,
-    isLoading,
-    refetch,
-    error,
-  } = useQuery({
-    queryKey: ["brands"],
-    queryFn: async () => {
-      const response = await api.get("/brands");
-      return response.data.data;
-    },
-    onError: (error) => {
-      toast.error(error.response?.data?.message || "Failed to fetch brands");
-    },
-  });
+    isOpen,
+    selectedItem,
+    isEditMode,
+    isDeleteModalOpen,
+    onClose,
+    handleEdit,
+    handleDelete,
+    handleAdd,
+  } = useModalState();
+
+  const { data, isLoading, error, refetch } = useGetItmes("brands");
 
   if (isLoading) {
     return <div>Loading...</div>;
@@ -61,9 +38,7 @@ export default function Brands() {
         <div className="mt-4 sm:ml-16 sm:mt-0 sm:flex-none">
           <button
             type="button"
-            onClick={() => {
-              setIsOpen(true);
-            }}
+            onClick={() => handleAdd()}
             className="block rounded-md bg-indigo-600 px-3 py-2 text-center text-sm font-semibold text-white hover:bg-indigo-500"
           >
             Add Brand
@@ -88,7 +63,7 @@ export default function Brands() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
-                {brands?.map((brand) => (
+                {data?.map((brand) => (
                   <>
                     <tr key={brand.id}>
                       <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-0">
@@ -118,23 +93,17 @@ export default function Brands() {
       </div>
       <DeleteConfirmationModal
         isOpen={isDeleteModalOpen}
-        onClose={() => setIsDeleteModalOpen(false)}
+        onClose={() => onClose()}
         title="Delete Brand"
         message="Are you sure you want to delete this brand? This action cannot be undone."
         model={"brands"}
-        doc={selectedBrand}
+        doc={selectedItem}
         refetch={refetch}
       />
       <AddBrandModal
         isOpen={isOpen}
         onClose={onClose}
-        onSuccess={() => {
-          queryClient.invalidateQueries(["brands"]);
-          setIsOpen(false);
-          setSelectedBrand(null);
-          setIsEditMode(false);
-        }}
-        brand={selectedBrand}
+        brand={selectedItem}
         isEditMode={isEditMode}
       />
     </div>

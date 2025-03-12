@@ -3,46 +3,27 @@ import { api } from "../lib/axios";
 import AddSubCategoryModal from "../components/models/AddSubCategoryModal";
 import { useState } from "react";
 import DeleteConfirmationModal from "../components/models/DeleteConfirmationModal";
+import useModalState from "../hooks/useModalState";
+import useGetItmes from "../hooks/useGetProducts";
 
 export default function SubCategories() {
-  const [isOpen, setIsOpen] = useState(false);
-  const [isEditMode, setIsEditMode] = useState(false);
-  const [selectedSubcategory, setSelectedSubcategory] = useState(null);
-  const [isDeleteMode, setIsDeleteMode] = useState(false);
-  const onClose = () => {
-    setIsOpen(false);
-    setSelectedSubcategory(null);
-    setIsEditMode(false);
-    setIsDeleteMode(false);
-  };
-  const handleEdit = (subcategory) => {
-    setSelectedSubcategory(subcategory);
-    setIsEditMode(true);
-    setIsOpen(true);
-  };
-  const handleDelete = (subcategory) => {
-    setSelectedSubcategory(subcategory);
-    setIsDeleteMode(true);
-  };
   const {
-    data: subCategories,
-    isLoading,
-    isError,
-    refetch,
-    error,
-  } = useQuery({
-    queryKey: ["subCategories"],
-    queryFn: async () => {
-      const response = await api.get("/subcategories");
-      return response.data.data;
-    },
-  });
+    isOpen,
+    selectedItem,
+    isEditMode,
+    isDeleteModalOpen,
+    onClose,
+    handleEdit,
+    handleDelete,
+    handleAdd,
+  } = useModalState();
+  const { data, isLoading, error, refetch } = useGetItmes("subcategories");
 
   if (isLoading) {
     return <div>Loading...</div>;
   }
 
-  if (isError) {
+  if (error) {
     return <div>Error: {error.message}</div>;
   }
 
@@ -58,7 +39,7 @@ export default function SubCategories() {
           <button
             type="button"
             className="block rounded-md bg-indigo-600 px-3 py-2 text-center text-sm font-semibold text-white hover:bg-indigo-500"
-            onClick={() => setIsOpen(true)}
+            onClick={() => handleAdd()}
           >
             Add Sub Category
           </button>
@@ -88,14 +69,14 @@ export default function SubCategories() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
-                {subCategories?.map((subCategory) => (
+                {data?.map((subCategory) => (
                   <>
                     <tr key={subCategory.id}>
                       <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-0">
                         {subCategory.name}
                       </td>
                       <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                        {subCategory.category}
+                        {subCategory.category.name}
                       </td>
                       <td className="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-0">
                         <button
@@ -120,18 +101,18 @@ export default function SubCategories() {
         </div>
       </div>
       <DeleteConfirmationModal
-        isOpen={isDeleteMode}
+        isOpen={isDeleteModalOpen}
         onClose={onClose}
         model="subcategories"
         message="Are you sure you want to delete this subcategory? This action cannot be undone."
-        doc={selectedSubcategory}
+        doc={selectedItem}
         refetch={refetch}
       />
       <AddSubCategoryModal
         isOpen={isOpen}
         onClose={onClose}
         refetch={refetch}
-        subcategory={selectedSubcategory}
+        subcategory={selectedItem}
         isEditMode={isEditMode}
       />
     </div>
